@@ -1674,7 +1674,6 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
 
     entity_description: TuyaSensorEntityDescription
 
-    _data_parser: DeviceDataParser | None = None
     _type: DPType | None = None
     _type_data: IntegerTypeData | EnumTypeData | None = None
 
@@ -1752,7 +1751,7 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
     @property
     def native_value(self) -> StateType:
         """Return the value reported by the sensor."""
-        if self._data_parser:
+        if isinstance(self._data_parser, DeviceDataParser):
             return self._data_parser.read_device_value(self.device)
 
         # Only continue if data type is known
