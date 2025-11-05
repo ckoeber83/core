@@ -41,7 +41,13 @@ from .const import (
     DPType,
 )
 from .entity import TuyaEntity
-from .models import ComplexValue, ElectricityValue, EnumTypeData, IntegerTypeData
+from .models import (
+    ComplexValue,
+    DeviceDataParser,
+    ElectricityValue,
+    EnumTypeData,
+    IntegerTypeData,
+)
 from .util import get_dptype
 
 _WIND_DIRECTIONS = {
@@ -1668,6 +1674,7 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
 
     entity_description: TuyaSensorEntityDescription
 
+    _data_parser: DeviceDataParser | None = None
     _type: DPType | None = None
     _type_data: IntegerTypeData | EnumTypeData | None = None
 
@@ -1692,8 +1699,7 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
         elif enum_type := self.find_dpcode(
             description.key, dptype=DPType.ENUM, prefer_function=True
         ):
-            self._type_data = enum_type
-            self._type = DPType.ENUM
+            self._data_parser = enum_type
         else:
             self._type = get_dptype(self.device, DPCode(description.key))
 
@@ -1746,6 +1752,9 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
     @property
     def native_value(self) -> StateType:
         """Return the value reported by the sensor."""
+        if self._data_parser:
+            return self._data_parser.read_device_value(self.device)
+
         # Only continue if data type is known
         if self._type not in (
             DPType.INTEGER,
@@ -1768,13 +1777,6 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
         # Scale integer/float value
         if isinstance(self._type_data, IntegerTypeData):
             return self._type_data.scale_value(value)
-
-        # Unexpected enum value
-        if (
-            isinstance(self._type_data, EnumTypeData)
-            and value not in self._type_data.range
-        ):
-            return None
 
         # Get subkey value from Json string.
         if self._type is DPType.JSON:
