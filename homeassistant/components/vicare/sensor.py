@@ -878,6 +878,22 @@ GLOBAL_SENSORS: tuple[ViCareSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         value_getter=lambda api: api.getHumidity(),
     ),
+        ViCareSensorEntityDescription(
+        key="ventilation_volumeFlow_current_input",
+        translation_key="ventilation_volumeFlow_current_input",
+        native_unit_of_measurement=UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR,
+        value_getter=lambda api: api.getventilation_volumeFlow_current_input(),
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ViCareSensorEntityDescription(
+        key="ventilation_volumeFlow_current_output",
+        translation_key="ventilation_volumeFlow_current_output",
+        native_unit_of_measurement=UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR,
+        value_getter=lambda api: api.getventilation_volumeFlow_current_output(),
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
     ViCareSensorEntityDescription(
         key="ventilation_level",
         translation_key="ventilation_level",
