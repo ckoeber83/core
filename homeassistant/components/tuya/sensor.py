@@ -41,13 +41,7 @@ from .const import (
     DPType,
 )
 from .entity import TuyaEntity
-from .models import (
-    ComplexValue,
-    DeviceDataParser,
-    ElectricityValue,
-    EnumTypeData,
-    IntegerTypeData,
-)
+from .models import ComplexValue, ElectricityValue, EnumTypeData, IntegerTypeData
 from .util import get_dptype
 
 _WIND_DIRECTIONS = {
@@ -1698,7 +1692,8 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
         elif enum_type := self.find_dpcode(
             description.key, dptype=DPType.ENUM, prefer_function=True
         ):
-            self._data_parser = enum_type
+            self._type_data = enum_type
+            self._type = DPType.ENUM
         else:
             self._type = get_dptype(self.device, DPCode(description.key))
 
@@ -1751,9 +1746,6 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
     @property
     def native_value(self) -> StateType:
         """Return the value reported by the sensor."""
-        if isinstance(self._data_parser, DeviceDataParser):
-            return self._data_parser.read_device_value(self.device)
-
         # Only continue if data type is known
         if self._type not in (
             DPType.INTEGER,
@@ -1776,6 +1768,10 @@ class TuyaSensorEntity(TuyaEntity, SensorEntity):
         # Scale integer/float value
         if isinstance(self._type_data, IntegerTypeData):
             return self._type_data.scale_value(value)
+
+        # Get enum value
+        if isinstance(self._type_data, EnumTypeData):
+            return self._type_data.read_device_value(self.device)
 
         # Get subkey value from Json string.
         if self._type is DPType.JSON:
